@@ -26,11 +26,20 @@ async function run() {
     await client.connect();
 
     const database = client.db("learning-school").collection("data");
+    const selectedCollection = client.db("bistroDb").collection("selects");
 
     app.get('/data', async(req, res) => {
       const result = await database.find().toArray();
       res.send(result);
     })
+
+    app.post('/selects', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await selectedCollection.insertOne(item);
+      res.send(result);
+    })
+
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
