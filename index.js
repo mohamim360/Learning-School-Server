@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config()
+
+
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -56,7 +58,7 @@ async function run() {
     })
     app.delete('/selects/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: new ItemId(id) };
       const result = await selectedCollection.deleteOne(query);
       res.send(result);
     })
