@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.dtd3sv1.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -29,6 +29,15 @@ async function run() {
 
     const database = client.db("learning-school").collection("data");
     const selectedCollection = client.db("learning-school").collection("selects");
+    const usersCollection = client.db("learning-school").collection("users");
+
+
+    app.get('/users', async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
 
     app.get('/data', async(req, res) => {
       
@@ -58,7 +67,7 @@ async function run() {
     })
     app.delete('/selects/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ItemId(id) };
+      const query = { _id: new ObjectId(id) };
       const result = await selectedCollection.deleteOne(query);
       res.send(result);
     })
