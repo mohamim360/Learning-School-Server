@@ -26,7 +26,7 @@ async function run() {
     await client.connect();
 
     const database = client.db("learning-school").collection("data");
-    const selectedCollection = client.db("learning-school").collection("select");
+    const selectedCollection = client.db("learning-school").collection("selects");
 
     app.get('/data', async(req, res) => {
       
@@ -37,7 +37,7 @@ async function run() {
 
 
 
-    app.get('/select', async (req, res) => {
+    app.get('/selects', async (req, res) => {
       const email = req.query.email;
 
       if (!email) {
@@ -48,10 +48,16 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/select', async (req, res) => {
+    app.post('/selects', async (req, res) => {
       const item = req.body;
       console.log(item);
       const result = await selectedCollection.insertOne(item);
+      res.send(result);
+    })
+    app.delete('/selects/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedCollection.deleteOne(query);
       res.send(result);
     })
 
