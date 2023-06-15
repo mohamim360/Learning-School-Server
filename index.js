@@ -31,10 +31,22 @@ async function run() {
     const selectedCollection = client.db("learning-school").collection("selects");
     const usersCollection = client.db("learning-school").collection("users");
 
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
     app.get('/users', async (req, res) => {
       const user = req.body;
-      const result = await usersCollection.find().toArray();
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
