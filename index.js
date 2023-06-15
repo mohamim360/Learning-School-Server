@@ -31,6 +31,12 @@ async function run() {
     const selectedCollection = client.db("learning-school").collection("selects");
     const usersCollection = client.db("learning-school").collection("users");
 
+
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
@@ -44,11 +50,21 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users', async (req, res) => {
-      const user = req.body;
-      const result = await usersCollection.insertOne(user);
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
-    });
+
+    })
+   
 
 
     app.get('/data', async(req, res) => {
