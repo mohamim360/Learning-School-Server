@@ -64,6 +64,15 @@ async function run() {
       }
       next();
     }
+     const verifySir = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
 
     
   app.get('/users',verifyJWT,verifyAdmin,  async (req, res) => {
@@ -126,7 +135,7 @@ async function run() {
       console.log(result)
     })
 
-    app.post('/classes',async(req,res) =>{
+    app.post('/classes',verifyJWT,verifySir,async(req,res) =>{
       const classItem = req.body;
       const result = await classCollection.insertOne(classItem)
       res.send(result);
