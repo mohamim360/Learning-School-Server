@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
-
+const stripe =require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -47,6 +47,7 @@ async function run() {
     const selectedCollection = client.db("learning-school").collection("selects");
     const usersCollection = client.db("learning-school").collection("users");
     const classCollection = client.db("learning-school").collection("classes");
+    const paymentCollection = client.db("learning-school").collection("payment");
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -75,7 +76,7 @@ async function run() {
     }
 
     
-  app.get('/users',verifyJWT,verifyAdmin,  async (req, res) => {
+  app.get('/users',verifyJWT,verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -84,7 +85,7 @@ async function run() {
 
     app.post('/users', async (req, res) => {
       const user = req.body;
-      const query = { email: user.email }
+      const query = { email: user.email}
       const existingUser = await usersCollection.findOne(query);
 
       if (existingUser) {
@@ -135,9 +136,56 @@ async function run() {
       console.log(result)
     })
 
+    app.get('/classes', verifyJWT,async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        res.send([]);
+      }
+
+        const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      } 
+
+      const query = { email: email };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post('/classes',verifyJWT,verifySir,async(req,res) =>{
       const classItem = req.body;
       const result = await classCollection.insertOne(classItem)
+      res.send(result);
+
+    })
+
+  
+
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === 'instructor' }
+      res.send(result);
+    })
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
 
     })
@@ -170,6 +218,28 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await selectedCollection.deleteOne(query);
       res.send(result);
+    })
+
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
+     
+    })
+
+    app.post('/pay-intent',verifyJWT,async(req,res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+      
     })
 
     
